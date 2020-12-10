@@ -1,0 +1,44 @@
+---
+title: "Trabajo BigData"
+subtitle: "Daniel Casino, Laura Borrás y Laura Albert."
+author: "Universitat de València."
+date: "Diciembre de 2020"
+output: ioslides_presentation
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introducción
+Con este trabajo queremos mostrar la frecuencia de nombres y apellidos en España.
+Además, nos centarremos en nuestros nombres propios. Mostraremos la frecuencia y su distribución por províncias.
+
+## Fuentes
+
+> - [Enlace al INE] <https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736177009&menu=resultados&idp=1254734710990#!tabs-1254736195454> 
+
+
+
+
+## Ejemplo 
+
+- Mapa por províncias de la distribución de la frecuencia del nombre "Laura".
+
+```{r, echo = FALSE, eval = TRUE, out.width = "76%", fig.align = "center"}
+knitr::include_graphics(here::here("imagenes", "Rplot.jpeg") ) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
