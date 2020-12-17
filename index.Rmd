@@ -1,6 +1,6 @@
 ---
-title: "Trabajo BigData"
-subtitle: "Daniel Casino, Laura Borrás y Laura Albert."
+title: "Nombres y apellidos en España"
+subtitle: "Daniel Casino Ballesteros, Laura Borrás Pariente y Laura Albert Moscardó."
 author: "Universitat de València."
 date: "Diciembre de 2020"
 output: ioslides_presentation
@@ -8,37 +8,486 @@ output: ioslides_presentation
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-# Introducción
-Con este trabajo queremos mostrar la frecuencia de nombres y apellidos en España.
-Además, nos centarremos en nuestros nombres propios. Mostraremos la frecuencia y su distribución por províncias.
+# 
 
-## Fuentes
+## INTRODUCCIÓN:
 
-> - [Enlace al INE] <https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736177009&menu=resultados&idp=1254734710990#!tabs-1254736195454> 
+Nuestro trabajo consiste en:
+
+> - Estudio de la frecuencia de los nombres y apellidos en España.
+
+> - Visualizar los nombres más tradicionales y los más modernos en la actualidad.
+
+> - Observar la distribución por el país de nuestros nombres: **Daniel** y **Laura**.
+
+> - Presentar las províncias con **más** y con **menos** personas llamadas por nuestro nombres.
+
+> - Representar la evolución de la frecuencia de nuestros nombres durante las décadas anteriores.
+
+## DATOS Y PAQUETES:
+
+- Fuente principal: **Instituto Nacional de Estadística (INE)**
+
+- Los paquetes que hemos **utilizado**:
+
+- library(tidyverse)
+  
+- library(klippy) 
+  
+- library(knitr)
+
+- library(readxl)
+  
+- library(reactable)
+
+- library(ggplot2)
+  
+- library(stringi)
+
+- library(ggThemeAssist)
 
 
+---- 
+
+- library(plotly)
+
+- library(patchwork)
+
+- library(ggrepel)
+
+- library(sf)
+
+- library(crosstalk)
+
+- library(gganimate)
+
+- library(hrbrthemes)
+
+- library(RcolorBrewer)
 
 
-## Ejemplo 
+# 
 
-- Mapa por províncias de la distribución de la frecuencia del nombre "Laura".
+## TABLAS:
+```{r, eval= TRUE, echo= FALSE, out.width="20%"}
 
-```{r, echo = FALSE, eval = TRUE, out.width = "76%", fig.align = "center"}
-knitr::include_graphics(here::here("imagenes", "Rplot.jpeg") ) 
+library(tidyverse)
+ library(klippy) 
+ library(knitr)
+ library(readxl)
+ library(reactable)
+ library(ggplot2)
+ library(stringi)
+ library(ggThemeAssist)
+ library(plotly)
+ library(patchwork)
+ library(ggrepel)
+ library(sf)
+ library(crosstalk)
+ library(gganimate)
+ library(hrbrthemes)
+ library(sf)
+ library(RColorBrewer)
+df_apellidos1 <- read_excel ("./Datos/frecuencia.xls", sheet=1, range="A5:E25798")
+df_apellidos2 <- read_excel ("./Datos/frecuencia.xls", sheet=2, range="A5:E50393")
+df_nombre1 <- read_excel ("./Datos/frecuencianombre.xls", sheet=1, range="A7:D25790")
+df_nombre <- read_excel ("./Datos/frecuencianombre.xls", sheet=2, range="A7:D26499")
+df_apellidos1 <- df_apellidos1 %>% rename(Frec_1er_Apellido = Total...3,
+  Frec_2o_Apellido= Total...4,
+  Frec_Ambos_Apellidos= Total...5)
+
+df_apellidos2 <- df_apellidos2 %>% rename(Frec_1er_Apellido = Total...3,
+  Frec_2o_Apellido= Total...4,
+  Frec_Ambos_Apellidos= Total...5)
+
+
+df_apellidosmodif <- suppressWarnings(transform(df_apellidos2, Frec_2o_Apellido= as.numeric(Frec_2o_Apellido),
+  Frec_Ambos_Apellidos=as.numeric(Frec_Ambos_Apellidos)
+  )
+  )
+df_apellidos_conjuntos <- full_join(df_apellidos1, df_apellidosmodif, by= c("Orden","Apellido","Frec_1er_Apellido","Frec_2o_Apellido","Frec_Ambos_Apellidos"))
+
+df_apellidos_conjuntos2 <- df_apellidos_conjuntos %>%
+  mutate(Letra= stri_sub(Apellido,1,1)) %>%
+  arrange(Letra)
+
+
+#NOMBRES
+df_nombreH<- df_nombre1 %>%
+  mutate(Sexo="Hombre") %>%
+  rename(Edad= `Edad Media (*)`)%>%
+  select(-c(Orden))
+
+df_nombreM <- df_nombre %>%
+  mutate(Sexo="Mujer") %>%
+  rename(Edad= `Edad Media (*)`) %>%
+  select(-c(Orden))
+
+
+df_NombresJuntos<- full_join(df_nombreH, df_nombreM, by= c("Nombre","Frecuencia","Edad","Sexo")) %>% arrange(desc(Frecuencia))
+
+df_NombresJuntos2 <- df_NombresJuntos %>%
+  mutate(Letra= stri_sub(Nombre,1,1)) %>%
+  arrange(Letra)
+data <- SharedData$new(df_NombresJuntos2)
+
+tabla1<- bscols(
+  widths = c(3,8),
+  list(
+    filter_checkbox("Letra","Letra", data, ~Letra, columns = 4),
+    filter_slider("Frecuencia","Frecuencia",data, ~Frecuencia, width = "80%")
+  ),
+reactable(data,
+  columns= list(Frecuencia= colDef(
+    align="center",
+  style = function(value, index, name, media) {
+    if (is.numeric(value) && value >= 25000) {
+      list(fontWeight = "bold", background = "rgba(0,255,0,0.3)")
+
+    }else if (is.numeric(value) && value >= mean(df_NombresJuntos2$Frecuencia)){
+      list(fontWeight="bold", background="rgba(255,255,0,0.3)")
+
+    }else{
+        list(fontWeight="bold", background="rgba(255,0,0,0.3)")
+      }
+  }),
+    Nombre=colDef(
+      align="center"
+    ),
+    Edad=colDef(
+      align="center"
+    ),
+    Sexo=colDef(
+      align="center"
+    ),
+    Letra=colDef(
+      align="center"
+    )
+),
+  resizable= TRUE,
+  showPageSizeOptions = TRUE,
+  outlined = TRUE,
+  bordered = TRUE,
+  pageSizeOptions = c(1, 2, 3),
+  defaultPageSize = 2,
+  theme = reactableTheme(
+    borderColor = "##a1a1a1",
+    searchInputStyle = list(width = "100%")
+  ),
+  searchable = TRUE,
+  paginationType = "simple",
+  language = reactableLang(
+    searchPlaceholder = "Buscar...",
+    noData = "No hay resultados",
+    pageInfo = "{rowStart} de {rowEnd} de las {rows} entradas",
+    pagePrevious = "\u276e",
+    pageNext = "\u276f",
+    pagePreviousLabel = "Página anterior",
+    pageNextLabel = "Página siguiente"
+  )
+  )
+)
+
+tabla1
 ```
 
 
+---
+- Tabla para **apellidos**:
+
+```{r, eval= TRUE, echo= FALSE,out.width="40%"}
+
+tabla2<- reactable(
+  df_apellidos_conjuntos2,
+  groupBy = "Letra",
+  bordered= TRUE,
+  showPageSizeOptions = TRUE,
+  pageSizeOptions = c(1,2,3,4),
+  defaultPageSize = 2,
+  striped=TRUE,
+  highlight = TRUE,
+  theme=reactableTheme(
+    stripedColor = "#ededed",
+    highlightColor = "#bfbfbf"
+  ),
+  searchable = TRUE,
+  paginationType = "simple",
+  language = reactableLang(
+    searchPlaceholder = "Buscar...",
+    noData = "No hay resultados",
+    pageInfo = "{rowStart} de {rowEnd} de las {rows} entradas",
+    pagePrevious = "\u276e",
+    pageNext = "\u276f",
+    pagePreviousLabel = "Página anterior",
+    pageNextLabel = "Página siguiente"
+  )
+)
+tabla2
+```
 
 
+# 
 
 
+## GRÁFICOS
+
+- Gráfico de los **nombres** tradicionales y modernos:
+
+```{r, echo= FALSE, eval= TRUE}
+#APELLIDOS
+df_apellidos <- df_apellidos1 %>% select(Apellido, Frec_1er_Apellido, Frec_2o_Apellido) %>% mutate(Frec_Total= Frec_1er_Apellido + Frec_2o_Apellido) %>% slice_max(Frec_Total, n=10)  #Seleccionamos las columnas de apellido, Frec_1er_Apellido y Frec_2o_Apellido que són las que necesitaremos para nuestro gráfico, después obtenemos la frecuencia total sumando la frecuencia del primer apellido más la del segundo y cogemos solo los 10 apellidos con mayor frecuencia.
+
+#ordenar de mayor a menor
+
+df_apellidos <- transform(df_apellidos, Apellido = reorder(Apellido, -Frec_Total))
+
+#NOMBRES
+df_nombres <- full_join(df_nombre, df_nombre1) #Tenemos dos df de nombres uno para los nombres de hombre y otro para los nombres de mujer, entonces juntamos los dos df para obtener solo uno.
+
+df_nombres3 <-df_nombres %>% select(Nombre, Frecuencia) %>% slice_max(Frecuencia, n=10) %>% mutate(Nombre = forcats::as_factor(Nombre)) %>% mutate(Nombre = forcats::fct_reorder(Nombre, Frecuencia)) #Seleccionamos las columnas que nos interesan para nuestro gráfico y seleccionamos los 10 nombres con mayor frecuencia. Convertimos la variable Nombre a factor con as_factor(). Después ordenamos las columnas de menor a mayor con fct_reorder().
+
+library(tidyverse)
+
+#10 MÁS FRECUENTES Y 10 QUE MENOS
+df_nombres_edadmedia <- df_nombres %>% select(Nombre, `Edad Media (*)`) %>% arrange(desc(`Edad Media (*)`)) %>%
+  slice(c(1,2,3,4,5,6,7,8,9,10,n()-9,n()-8,n()-7,n()-6,n()-5,n()-4,n()-3,n()-2,n()-1, n()))%>%
+  mutate(Nombre = forcats::as_factor(Nombre)) %>% mutate(Nombre = forcats::fct_reorder(Nombre, `Edad Media (*)`))#Seleccionamos las variables nombre y edad media para después poder hacer el gráfico. Con arrange ordenamos la Edad Media de mayor a menor y con slice seleccionamos los 10 nombres con mayor y menor media.Por último, con mutate ordenamos de mayor a menor.
+
+r <- ggplot(df_nombres_edadmedia, aes(Nombre, `Edad Media (*)`)) + geom_col(fill="mediumpurple") + coord_flip() + theme(plot.caption = element_text(face = "bold.italic"), 
+    axis.ticks = element_line(size = 0.6), 
+    axis.title = element_text(size = 10, 
+        face = "bold", vjust = 0,5), axis.text = element_text(size = 10, 
+        face = "bold"), plot.title = element_text(face = "bold", size = 8, 
+        hjust = 0, vjust = 1,5), panel.background = element_rect(fill = "lavender")) +labs(title = "LOS 10 NOMBRES CON MÁS Y MENOS EDAD MEDIA",
+    caption = "Datos provenientes del INE") 
+
+aa<-ggplotly(r)
+aa
+```
 
 
+---
+
+- Gráfico para los **10 apellidos** más frecuentes en España:
+```{r, echo= FALSE, eval = TRUE}
+#obtenemos un vector de diferentes colores del Set1 de brewer.pal
+Miscolores <- brewer.pal(10, "Set3")
+
+#asignamos un color diferente a cada factor de apellido
+
+names(Miscolores)<- df_apellidos$Apellido
+
+#Ahora podemos usar los colores asignados a los 10 apellidos para colorear la barra
+
+t <- ggplot(df_apellidos, aes(Apellido, Frec_Total, fill=Apellido)) + geom_bar(stat="identity") + scale_colour_manual(values=Miscolores)
+
+a<- t + theme(plot.caption = element_text(size = 11, 
+    face = "bold.italic"), axis.line = element_line(size = 1.2), 
+    axis.title = element_text(size = 14, 
+        face = "bold"), axis.text = element_text(size = 13, 
+        face = "bold"), axis.text.x = element_text(size = 13, 
+        vjust = 0.5, angle = 40), plot.title = element_text(face = "bold", 
+        hjust = 0.5, vjust = 1.5), legend.title = element_text(size = 12, 
+        face = "bold"), legend.key = element_rect(fill = "gray91"), 
+    legend.background = element_rect(fill = "gray97")) +labs(title = "LOS 10 APELLIDOS MÁS FRECUENTES DE ESPAÑA", 
+    caption = "Datos provenientes del INE")
+a
+```
 
 
+---
+
+- Gráfico de los **10 nombres** más frecuentes en España:
+```{r, echo= FALSE, eval= TRUE}
+
+#obtenemos un vector de diferentes colores del Set1 de brewer.pal
+Miscolores <- brewer.pal(10, "Set3")
+
+#asignamos un color diferente a cada factor de apellido
+
+names(Miscolores)<- df_nombres3$Nombre
+
+s <- ggplot(df_nombres3, aes(Nombre, Frecuencia, fill=Nombre)) + geom_bar(stat="Identity")+ scale_colour_manual(values=Miscolores)
+
+bb<-s + theme(plot.caption = element_text(size = 10, 
+    face = "bold.italic"), panel.grid.major = element_line(size = 1), 
+    panel.grid.minor = element_line(size = 1), 
+    axis.title = element_text(size = 15, 
+        face = "bold", vjust = 1), axis.text = element_text(size = 15, 
+        face = "bold"), axis.text.x = element_text(size = 10, 
+        vjust = 0.75, angle = 25), plot.title = element_text(face = "bold.italic", 
+        hjust = 0.5, vjust = 2), legend.text = element_text(face = "italic"), 
+    legend.title = element_text(size = 12, 
+        face = "bold.italic"), panel.background = element_rect(fill = "gray89"), 
+    legend.background = element_rect(fill = "gray85")) +labs(title = "LOS 10 NOMBRES MÁS FRECUENTES DE ESPAÑA", 
+    caption = "Datos provenientes del INE")
+bb
+```
+
+# 
 
 
+## MAPAS 
 
+- Para el nombre de **Daniel**:
+
+```{r, echo = FALSE, eval= TRUE}
+
+df_Daniel <- read_excel ("./Datos/Daniel_Laura2.xlsx", sheet=1)
+df_Laura <- read_excel ("./Datos/Daniel_Laura2.xlsx", sheet=2)
+load("./Datos/geometrias_clase_10.RData")
+
+dfDaniel <- full_join(Provincias, df_Daniel, by = c("NombreProv" = "Provincia"))
+
+MAPA1<-ggplot(dfDaniel,aes(geometry = geometry)) + geom_sf(aes(fill= Total))  + scale_fill_viridis_c(option = "viridis", trans = "sqrt", direction = -1) + coord_sf(xlim = c(-20,10)) + annotate(geom = "text", x = 4, y = 37, label = "Mar Mediterráneo", fontface = "italic", color = "grey22", size = 3) + labs (title = "Mapa 1: Distribución de personas llamadas Daniel en España",
+       subtitle = "Por províncias",
+       caption = "Datos provenientes del INE") + theme_void() 
+MAPA1
+```
+
+
+---
+
+```{r echo = FALSE,eval = TRUE}
+#Las tres provincincias con más personas llamadas Daniel.
+Provincias_mayor<- dfDaniel %>% slice_max(Total, n = 3) 
+provincias_point <- st_centroid(Provincias_mayor) #Cambiamos la geometry por el centroide
+provincias_points <- cbind(Provincias_mayor, st_coordinates(st_centroid(Provincias_mayor$geometry)))
+
+MasProvDan<- ggplot() + geom_sf(data = dfDaniel) + geom_sf(data = Provincias_mayor, fill = "green")+ coord_sf(ylim = c(35,45), xlim = c(-10,5)) + theme_minimal() + labs (title = "Mapa 2: Provincias con más personas llamadas Daniel", size = 3)  +geom_text(data = provincias_points, 
+            aes(x = X, y = Y, label = NombreProv), 
+            color = "Black", fontface = "bold", check_overlap = TRUE, size = 2.5) +theme_test()
+
+#Las tres provincias con menos personas llamadas Daniel.
+Provincias_menor<- dfDaniel %>% slice_min(Total, n = 5)
+Provincias_point <- st_centroid(Provincias_menor) #Cambiamos la geometry por el centroide
+Provincias_points <- cbind(Provincias_menor, st_coordinates(st_centroid(Provincias_menor$geometry)))
+
+MenosProvDan<- ggplot() + geom_sf(data = dfDaniel) + geom_sf(data = Provincias_menor, fill = "red")+ coord_sf(ylim = c(35,45), xlim = c(-10,5)) + theme_minimal() + labs (title = "Mapa 3: Provincias con menos personas llamadas Daniel", size = 3)  +geom_text(data = Provincias_points, 
+            aes(x = X, y = Y, label = NombreProv), 
+            color = "White", fontface = "bold", check_overlap = TRUE, size = 2.5) +theme_test()
+
+#Mostramos los plots
+
+MasProvDan + MenosProvDan
+
+```
+
+
+## Para el caso de **Laura**:
+
+```{r, echo=FALSE, eval= TRUE}
+#Hacemos otro mapa de coropletas para el total del nombre "Laura".
+dfLaura<-full_join(Provincias,df_Laura, by = c("NombreProv" = "Provincia")) %>%select(-c(INECodCCAA, NombreCCAA, INECodProv))
+MAPA3<- ggplot(data = dfLaura, aes(geometry = geometry)) + geom_sf(aes(fill = Total)) + scale_fill_viridis_c(option = "inferno", trans = "sqrt", direction = -1) + coord_sf(xlim = c(-20,10)) +
+  annotate(geom = "text", x = 4, y = 37, 
+           label = "Mar Mediterráneo", fontface = "italic", color = "grey22", size = 3) + labs (title = "Mapa 4: Distribución de personas llamadas Laura en España",
+       subtitle = "Por províncias",
+       caption = "Datos provenientes del INE") + theme_void()
+MAPA3
+```
+
+
+---
+
+```{r, echo=FALSE, eval= TRUE}
+
+#Mapa de las provincias con más personas llamadas Laura
+Provincias_mayor<- dfLaura %>% slice_max(Total, n = 3)
+provincias_points <- st_centroid(Provincias_mayor) #Cambiamos la geometry por el centroide
+provincias_points <- cbind(Provincias_mayor, st_coordinates(st_centroid(Provincias_mayor$geometry)))
+
+MasProvLau<- ggplot() + geom_sf(data = dfLaura) + geom_sf(data = Provincias_mayor, fill = "green")+ coord_sf(ylim = c(35,45), xlim = c(-10,5)) + theme_minimal() + labs (title = "Mapa 5: Provincias con más personas llamadas Laura", size = 3)  + geom_text(data = provincias_points, 
+            aes(x = X, y = Y, label = NombreProv), 
+            color = "Black", fontface = "bold", check_overlap = TRUE, size = 2.5) + theme_test()
+
+#Mapa de las provincias con menos personas llamadas Laura
+Provincias_menor<- dfLaura %>% slice_min(Total, n = 5)
+provincias_points <- st_centroid(Provincias_menor) #Cambiamos la geometry por el centroide
+provincias_points <- cbind(Provincias_menor, st_coordinates(st_centroid(Provincias_menor$geometry)))
+
+MenosProvLau<- ggplot() + geom_sf(data = dfLaura) + geom_sf(data = Provincias_menor, fill = "red")+ coord_sf(ylim = c(35,45), xlim = c(-10,5)) + theme_minimal() + labs (title = "Mapa 6: Provincias con menos personas llamadas Laura", size = 3)  + geom_text(data = provincias_points,
+            aes(x = X, y = Y, label = NombreProv), 
+            color = "White", fontface = "bold", check_overlap = TRUE, size = 2.5) +theme_test()
+MasProvLau + MenosProvLau
+```
+
+
+## MAPA INTERACTIVO
+- Evolución de los nombres **Laura** y **Daniel**:
+
+```{r, eval= TRUE, echo= FALSE, out.width= "70%"}
+#DANIEL
+DecadaDaniel <- read_excel("Datos/DecadaDaniel.xls")
+
+DecadaDaniel1<- DecadaDaniel %>% select(Nombre, Províncias, `1930`, `1940`, `1950`, `1950`, `1960`, `1970`, `1980`, `1990`, `2000`,`2010`)
+
+DecadaDaniel2 <- DecadaDaniel1 %>% pivot_longer(cols=3:11,names_to="año",values_to="frecuencia")
+
+DecadaDanielDEF <- DecadaDaniel2 %>% filter(!is.na(frecuencia)) %>% group_by(Nombre,año) %>% summarise(suma=sum(frecuencia))
+
+
+#LAURA
+DecadaLaura<- read_excel("Datos/DecadaLaura.xls")
+
+
+DecadaLaura1<- DecadaLaura %>% select(Nombre, Províncias, `1930`, `1940`, `1950`, `1950`, `1960`, `1970`, `1980`, `1990`, `2000`,`2010`)
+
+DecadaLaura2 <- DecadaLaura1 %>% pivot_longer(cols=3:11,names_to="año",values_to="frecuencia")
+
+DecadaLauraDEF <- DecadaLaura2 %>% filter(!is.na(frecuencia)) %>% group_by(Nombre,año) %>% summarise(suma=sum(frecuencia))
+
+
+DecadaJuntos<- full_join(DecadaDanielDEF,DecadaLauraDEF) %>% mutate(año1= as.numeric(as.character(año))) %>% select(Nombre,año1,suma)
+
+# PLOT
+Mapainteractivo<- DecadaJuntos %>%
+  ggplot( aes(x=año1, y=suma, group=Nombre, color=Nombre)) +
+  geom_line() +
+  geom_point() +
+  ggtitle("Frecuencia de 2 nombres durante décadas ") +
+  theme_ipsum() +
+  ylab("Frecuencia") +
+  transition_reveal(año1)
+Mapainteractivo
+```
+
+
+## BIBILIOGRAFIA:
+
+- Datos Nombres INE: [Enlace a INE base, nombres](https://www.ine.es/daco/daco42/nombyapel/nombres_por_edad_media.xls)  
+
+- Datos apellidos INE: [Enlace a INE base, apellidos](https://www.ine.es/daco/daco42/nombyapel/apellidos_frecuencia.xls)
+
+- Datos concretos Daniel y Laura, INE: [Enlace a INE base](https://www.ine.es/tnombres/formGeneralresult.do)
+
+- Ejemplos de readtables: [Enlace a GIthub](https://glin.github.io/reactable/articles/examples.html)
+
+- Tutorial sobre gráficos: [Enlace a la pàgina](https://rstudio-pubs-static.s3.amazonaws.com/179803_5612c0bc54d54696bc09622b69d634b1.html)
+
+- Tutorial Data munging: [Enlace a la página](https://perezp44.github.io/intro-ds-20-21-web/tutoriales/tt_05_data-munging.html)
+
+- Tutotial Ggplot: [Enlace a la página](https://perezp44.github.io/intro-ds-20-21-web/tutoriales/tt_06_ggplot2.html)
+
+- Tutorial line chart: [Enlace a la página](https://www.r-graph-gallery.com/287-smooth-animation-with-tweenr.html)
+
+- Tutorial sobre Rmd: [Enlace a la página](https://codingclubuc3m.rbind.io/post/2019-09-24/) 
+
+- Ejemplo de ioslides: [ejemplo de *ioslides*](https://choux130.github.io/slide_thesis_ioslides/#1). El código está [aquí](https://github.com/choux130/slide_thesis_ioslides).
+
+
+## Gracias por vuestra atención.
+
+- **¡Esperamos que os haya gustado!**
+
+- Daniel Casino
+
+- Laura Borrás
+
+- Laura Albert
+
+
+<br><br>
