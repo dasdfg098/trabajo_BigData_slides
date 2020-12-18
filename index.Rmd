@@ -3,7 +3,9 @@ title: "Nombres y apellidos en España"
 subtitle: "Daniel Casino Ballesteros, Laura Borrás Pariente y Laura Albert Moscardó."
 author: "Universitat de València."
 date: "Diciembre de 2020"
-output: ioslides_presentation
+output: 
+  ioslides_presentation:
+    widescreen: true
 ---
 
 
@@ -13,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 # 
 
-## INTRODUCCIÓN:
+## INTRODUCCIÓN: 
 
 Nuestro trabajo consiste en:
 
@@ -27,9 +29,15 @@ Nuestro trabajo consiste en:
 
 > - Representar la evolución de la frecuencia de nuestros nombres durante las décadas anteriores.
 
-## DATOS Y PAQUETES:
+## DATOS 
 
 - Fuente principal: **Instituto Nacional de Estadística (INE)**
+```{r echo = FALSE, out.width = "73%", fig.align = "center" , caption = "<https://xkcd.com>"}
+knitr::include_graphics(here::here( "imagenes", "INEbaselogo.png" ))
+```
+
+
+## PAQUETES
 
 - Los paquetes que hemos **utilizado**:
 
@@ -71,7 +79,10 @@ Nuestro trabajo consiste en:
 
 # 
 
-## TABLAS:
+## TABLAS:  
+
+- Tabla para **nombres**:
+
 ```{r, eval= TRUE, echo= FALSE, out.width="20%"}
 
 library(tidyverse)
@@ -196,6 +207,7 @@ tabla1
 
 
 ---
+
 - Tabla para **apellidos**:
 
 ```{r, eval= TRUE, echo= FALSE,out.width="40%"}
@@ -232,7 +244,7 @@ tabla2
 # 
 
 
-## GRÁFICOS
+## GRÁFICOS  
 
 - Gráfico de los **nombres** tradicionales y modernos:
 
@@ -330,7 +342,7 @@ bb
 # 
 
 
-## MAPAS 
+## MAPAS  
 
 - Para el nombre de **Daniel**:
 
@@ -416,7 +428,8 @@ MasProvLau + MenosProvLau
 ```
 
 
-## MAPA INTERACTIVO
+## MAPA INTERACTIVO  
+
 - Evolución de los nombres **Laura** y **Daniel**:
 
 ```{r, eval= TRUE, echo= FALSE, out.width= "70%"}
@@ -480,6 +493,10 @@ Mapainteractivo
 
 
 ## Gracias por vuestra atención.
+
+ <div class="red2">
+ ¿Alguna duda?
+ </div>
 
 - **¡Esperamos que os haya gustado!**
 
